@@ -3,3 +3,4 @@
 .dart_tool/
 config.json
 temp.png
+build/

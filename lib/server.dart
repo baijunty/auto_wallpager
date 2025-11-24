@@ -17,7 +17,7 @@ class TaskWrap {
   Config get config => _config;
   final success = {'message': 'ok', 'success': true};
   TaskWrap(this._config) {
-    _client = ComfyClient(_config.address);
+    _client = ComfyClient(_config.address, this.config);
     _router
       ..post('/config', _setting)
       ..get('/nextPaper', _nextWallPaper)
@@ -32,7 +32,7 @@ class TaskWrap {
     final body = await request.readAsString();
     var newConfig = Config.fromJson(json.decode(body));
     if (newConfig.address != _config.address) {
-      _client = ComfyClient(newConfig.address);
+      _client = ComfyClient(newConfig.address, newConfig);
       _restart(request);
     }
     _config = newConfig;

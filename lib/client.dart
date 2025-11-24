@@ -8,15 +8,18 @@ import 'package:dio/dio.dart';
 import 'package:uuid/uuid.dart';
 import 'package:web_socket/web_socket.dart';
 
+import 'config.dart';
+
 class ComfyClient {
   final String url;
   late String _clientId;
-  late Map<String, dynamic> prompt;
+  late Map<String, dynamic> workflow;
   final Dio _dio = Dio();
   final _queue = <String>[];
   final completed = <String>[];
+  final Config config;
   WebSocket? _ws;
-  ComfyClient(this.url) {
+  ComfyClient(this.url, this.config) {
     _clientId = Uuid().v4();
   }
 
@@ -29,10 +32,14 @@ class ComfyClient {
             '${uri.scheme == 'http' ? 'ws' : 'wss'}://${uri.host}/ws?clientId=$_clientId',
           ),
         );
-        prompt = await File(
+        workflow = await File(
           'dart_v2.json',
         ).readAsString().then((s) => json.decode(s) as Map<String, dynamic>);
-        prompt['client_id'] = _clientId;
+        workflow['client_id'] = _clientId;
+        var prompt = workflow['prompt'] as Map<String, dynamic>;
+        prompt['26']['inputs']['model'] = config.tagModel;
+        prompt['36']['inputs']['ckpt_name'] = config.model;
+        prompt['27']['inputs']['rating'] = config.rating;
         loopForId();
       }
     } catch (e) {
@@ -65,11 +72,11 @@ class ComfyClient {
 
   Future<Map<String, dynamic>> _queuePrompt() async {
     await _init();
-    (prompt['prompt']['40'])['inputs']['seed'] = Random().nextInt64();
-    (prompt['prompt']['43'])['inputs']['seed'] = Random().nextInt(1 << 32);
+    (workflow['prompt']['40'])['inputs']['seed'] = Random().nextInt64();
+    (workflow['prompt']['43'])['inputs']['seed'] = Random().nextInt(1 << 32);
     final response = await _dio.post<Map<String, dynamic>>(
       '$url/prompt',
-      data: json.encode(prompt),
+      data: json.encode(workflow),
       options: Options(responseType: ResponseType.json),
     );
     print(response.data);
