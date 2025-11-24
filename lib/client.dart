@@ -23,8 +23,11 @@ class ComfyClient {
   Future<void> _init() async {
     try {
       if (_ws == null) {
+        var uri = Uri.parse(url);
         _ws = await WebSocket.connect(
-          Uri.parse('ws://$url/ws?clientId=$_clientId'),
+          Uri.parse(
+            '${uri.scheme == 'http' ? 'ws' : 'wss'}://${uri.host}/ws?clientId=$_clientId',
+          ),
         );
         prompt = await File(
           'dart_v2.json',
@@ -65,7 +68,7 @@ class ComfyClient {
     (prompt['prompt']['40'])['inputs']['seed'] = Random().nextInt64();
     (prompt['prompt']['43'])['inputs']['seed'] = Random().nextInt(1 << 32);
     final response = await _dio.post<Map<String, dynamic>>(
-      'http://$url/prompt',
+      '$url/prompt',
       data: json.encode(prompt),
       options: Options(responseType: ResponseType.json),
     );
@@ -86,7 +89,7 @@ class ComfyClient {
     };
     final urlValues = Uri(queryParameters: data).query;
     final response = await _dio.get<Uint8List>(
-      'http://$url/view?$urlValues',
+      '$url/view?$urlValues',
       options: Options(responseType: ResponseType.bytes),
     );
     return response.data!;
@@ -95,7 +98,7 @@ class ComfyClient {
   Future<Map<String, dynamic>> getHistory(String promptId) async {
     await _init();
     final response = await _dio.get<Map<String, dynamic>>(
-      'http://$url/history/$promptId',
+      '$url/history/$promptId',
       options: Options(responseType: ResponseType.json),
     );
     return response.data!;

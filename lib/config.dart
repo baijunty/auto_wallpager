@@ -18,7 +18,7 @@ class Config {
   Target? target;
 
   Config({
-    this.address = '127.0.0.1:8188',
+    this.address = 'http://127.0.0.1:8188',
     this.duration = 5,
     this.model,
     this.tagModel = "dart-v2-sft",
