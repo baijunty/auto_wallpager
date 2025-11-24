@@ -29,7 +29,7 @@ class ComfyClient {
         var uri = Uri.parse(url);
         _ws = await WebSocket.connect(
           Uri.parse(
-            '${uri.scheme == 'http' ? 'ws' : 'wss'}://${uri.host}/ws?clientId=$_clientId',
+            '${uri.scheme == 'http' ? 'ws' : 'wss'}://${uri.host}:${uri.port}/ws?clientId=$_clientId',
           ),
         );
         workflow = await File(
