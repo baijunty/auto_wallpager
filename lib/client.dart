@@ -32,16 +32,7 @@ class ComfyClient {
             '${uri.scheme == 'http' ? 'ws' : 'wss'}://${uri.host}:${uri.port}/ws?clientId=$_clientId',
           ),
         );
-        workflow = await File(
-          'dart_v2.json',
-        ).readAsString().then((s) => json.decode(s) as Map<String, dynamic>);
-        workflow['client_id'] = _clientId;
-        var prompt = workflow['prompt'] as Map<String, dynamic>;
-        prompt['26']['inputs']['model'] = config.tagModel;
-        prompt['36']['inputs']['ckpt_name'] = config.model;
-        prompt['27']['inputs']['rating'] = config.rating;
-        prompt['27']['inputs']['character'] = config.target?.name ?? '';
-        prompt['27']['inputs']['copyright'] = config.target?.product ?? '';
+        _initWorkflow();
         loopForId();
       }
     } catch (e) {
@@ -49,8 +40,22 @@ class ComfyClient {
     }
   }
 
+  Future<void> _initWorkflow() async {
+    workflow = json.decode(File('dart_v2.json').readAsStringSync());
+    workflow['client_id'] = _clientId;
+    var prompt = workflow['prompt'] as Map<String, dynamic>;
+    prompt['26']['inputs']['model'] = config.tagModel;
+    prompt['36']['inputs']['ckpt_name'] = config.model;
+    prompt['27']['inputs']['rating'] = config.rating;
+    prompt['27']['inputs']['character'] = config.target?.name ?? '';
+    prompt['27']['inputs']['copyright'] = config.target?.product ?? '';
+  }
+
   Future<void> loopForId() async {
     // Listen to websocket for completion signal
+    File('dart_v2.json').watch(events: FileSystemEvent.modify).listen((_) {
+      _initWorkflow();
+    });
     await for (final out in _ws!.events) {
       if (out is TextDataReceived) {
         final message = json.decode(out.text);

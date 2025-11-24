@@ -19,7 +19,7 @@ class TaskWrap {
   TaskWrap(this._config) {
     _client = ComfyClient(_config.address, this.config);
     _router
-      ..post('/config', _setting)
+      ..post('/setting', _setting)
       ..get('/nextPaper', _nextWallPaper)
       ..get('/pause', _pause)
       ..get('/restart', _restart);
