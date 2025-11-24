@@ -79,7 +79,7 @@ Future<void> runServer(TaskWrap wrap) async {
       .addHandler(wrap._router.call);
   final servers = await serve(
     handler,
-    InternetAddress.anyIPv6,
+    InternetAddress.loopbackIPv4,
     8987,
     poweredByHeader: 'wallpager',
   );
