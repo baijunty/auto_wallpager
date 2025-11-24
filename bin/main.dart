@@ -11,7 +11,8 @@ void main(List<String> arguments) async {
   try {
     var args = parser.parse(arguments);
     if (args['deamon']) {
-      var file = File('config.json');
+      var path = args['config'];
+      var file = File(path);
       var url = args['url'];
       var time = int.parse(args['time']);
       if (time <= 0) {
@@ -39,6 +40,7 @@ ArgParser _createArgParser() {
   final parser = ArgParser();
   parser.addOption('url', abbr: 'u', defaultsTo: 'http://127.0.0.1:8188');
   parser.addOption('time', abbr: 't', defaultsTo: '10');
+  parser.addOption('config', abbr: 'c', defaultsTo: 'config.json');
   parser.addFlag('deamon', abbr: 'd', defaultsTo: false);
   return parser;
 }

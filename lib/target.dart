@@ -8,7 +8,7 @@ class Target {
   String? name;
   String? product;
 
-  Target({this.name, this.product});
+  Target(this.name, this.product);
 
   @override
   String toString() => 'Target(name: $name, product: $product)';
@@ -20,7 +20,7 @@ class Target {
   Map<String, dynamic> toJson() => _$TargetToJson(this);
 
   Target copyWith({String? name, String? product}) {
-    return Target(name: name ?? this.name, product: product ?? this.product);
+    return Target(name ?? this.name, product ?? this.product);
   }
 
   @override

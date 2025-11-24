@@ -40,6 +40,8 @@ class ComfyClient {
         prompt['26']['inputs']['model'] = config.tagModel;
         prompt['36']['inputs']['ckpt_name'] = config.model;
         prompt['27']['inputs']['rating'] = config.rating;
+        prompt['27']['inputs']['character'] = config.target?.name ?? '';
+        prompt['27']['inputs']['copyright'] = config.target?.product ?? '';
         loopForId();
       }
     } catch (e) {

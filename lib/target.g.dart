@@ -7,7 +7,7 @@ part of 'target.dart';
 // **************************************************************************
 
 Target _$TargetFromJson(Map<String, dynamic> json) =>
-    Target(name: json['name'] as String?, product: json['product'] as String?);
+    Target(json['name'] as String?, json['product'] as String?);
 
 Map<String, dynamic> _$TargetToJson(Target instance) => <String, dynamic>{
   'name': instance.name,

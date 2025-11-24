@@ -7,7 +7,7 @@ part of 'config.dart';
 // **************************************************************************
 
 Config _$ConfigFromJson(Map<String, dynamic> json) => Config(
-  address: json['address'] as String? ?? '127.0.0.1:8188',
+  address: json['address'] as String? ?? 'http://127.0.0.1:8188',
   duration: (json['duration'] as num?)?.toInt() ?? 5,
   model: json['model'] as String?,
   tagModel: json['tag_model'] as String? ?? "dart-v2-sft",
