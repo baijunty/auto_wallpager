@@ -17,7 +17,7 @@ class TaskWrap {
   Config get config => _config;
   final success = {'message': 'ok', 'success': true};
   TaskWrap(this._config) {
-    _client = ComfyClient(_config.address, this.config);
+    _client = ComfyClient(_config.address, _config);
     _router
       ..post('/setting', _setting)
       ..get('/nextPaper', _nextWallPaper)

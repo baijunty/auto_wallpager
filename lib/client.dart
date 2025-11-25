@@ -37,6 +37,7 @@ class ComfyClient {
       }
     } catch (e) {
       print(e);
+      _ws = null;
     }
   }
 
