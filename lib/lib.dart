@@ -3,8 +3,7 @@ import 'dart:math';
 import 'package:win32/win32.dart';
 export 'client.dart';
 
-void setWallpaper(String imagePath) {
-  print('设置壁纸：$imagePath');
+int setWallpaper(String imagePath) {
   final imagePathPtr = TEXT(imagePath);
   final result = SystemParametersInfo(
     SPI_SETDESKWALLPAPER,
@@ -14,10 +13,7 @@ void setWallpaper(String imagePath) {
   );
 
   free(imagePathPtr);
-
-  if (result == 0) {
-    print('设置壁纸失败');
-  }
+  return result;
 }
 
 extension Random64 on Random {

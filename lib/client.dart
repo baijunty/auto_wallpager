@@ -5,6 +5,7 @@ import 'dart:typed_data';
 
 import 'package:auto_wallpager/lib.dart';
 import 'package:dio/dio.dart';
+import 'package:logger/web.dart';
 import 'package:uuid/uuid.dart';
 import 'package:web_socket/web_socket.dart';
 
@@ -18,11 +19,13 @@ class ComfyClient {
   final _queue = <String>[];
   final completed = <String>[];
   final Config config;
+  final Logger? logger;
   WebSocket? _ws;
-  ComfyClient(this.url, this.config, this._dio) {
+  ComfyClient(this.url, this.config, this._dio, {this.logger}) {
     _clientId = Uuid().v4();
     // Listen to websocket for completion signal
     File('dart_v2.json').watch(events: FileSystemEvent.modify).listen((_) {
+      logger?.d('Reloading workflow');
       _initWorkflow();
     });
   }
@@ -41,6 +44,7 @@ class ComfyClient {
       }
     } catch (e) {
       print(e);
+      _ws?.close();
       _ws = null;
     }
   }
@@ -70,7 +74,7 @@ class ComfyClient {
           }
         }
       } else if (out is CloseReceived) {
-        print('Connection closed');
+        logger?.e('Connection closed ${out.reason}');
         _ws = null;
         break;
       }
@@ -90,7 +94,7 @@ class ComfyClient {
       data: json.encode(workflow),
       options: Options(responseType: ResponseType.json),
     );
-    print(response.data);
+    logger?.d(response.data);
     return response.data!;
   }
 
@@ -122,11 +126,11 @@ class ComfyClient {
     return response.data!;
   }
 
-  Future<Map<String, List<Uint8List>>> getImages() async {
+  Future<List<Uint8List>> getImages() async {
     await _init();
     final result = await _queuePrompt();
     final promptId = result['prompt_id'];
-    final outputImages = <String, List<Uint8List>>{};
+    final outputImages = <Uint8List>[];
     _queue.add(promptId);
     while (_queue.contains(promptId)) {
       await Future.delayed(Duration(milliseconds: 100));
@@ -138,7 +142,6 @@ class ComfyClient {
 
       for (final nodeId in outputs.keys) {
         final nodeOutput = outputs[nodeId];
-        final imagesOutput = <Uint8List>[];
 
         if (nodeOutput is Map && nodeOutput['images'] != null) {
           final images = nodeOutput['images'];
@@ -150,15 +153,13 @@ class ComfyClient {
                   image['subfolder'].toString(),
                   image['type'].toString(),
                 );
-                imagesOutput.add(imageData);
+                outputImages.add(imageData);
               }
             }
           }
         }
-        outputImages[nodeId.toString()] = imagesOutput;
       }
     }
-
     return outputImages;
   }
 }

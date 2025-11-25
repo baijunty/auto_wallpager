@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:dio/dio.dart' show Dio;
+import 'package:logger/logger.dart';
 import 'package:shelf/shelf.dart';
 import 'package:shelf/shelf_io.dart';
 import 'package:shelf_router/shelf_router.dart';
@@ -16,10 +17,11 @@ class TaskWrap {
   var _config = Config();
   late ComfyClient _client;
   late Timer _timer;
+  final logger = Logger();
   Config get config => _config;
   final success = {'message': 'ok', 'success': true};
   TaskWrap(this._config, this._dio) {
-    _client = ComfyClient(_config.address, _config, _dio);
+    _client = ComfyClient(_config.address, _config, _dio, logger: logger);
     _router
       ..post('/setting', _setting)
       ..get('/nextPaper', _nextWallPaper)
@@ -43,10 +45,13 @@ class TaskWrap {
 
   Future<void> _next() async {
     final images = await _client.getImages();
-    final image = images.entries.first.value.first;
+    final image = images.first;
     final temp = File('temp.png');
     temp.writeAsBytesSync(image);
-    setWallpaper(temp.absolute.path);
+    logger.d('set wallpaper');
+    if (setWallpaper(temp.path) != 0) {
+      logger.d('failed to set wallpaper');
+    }
   }
 
   Future<Response> _nextWallPaper(Request req) async {
@@ -77,7 +82,13 @@ class TaskWrap {
 
 Future<void> runServer(TaskWrap wrap) async {
   final handler = Pipeline()
-      .addMiddleware(logRequests())
+      .addMiddleware(
+        logRequests(
+          logger: (message, isError) {
+            isError ? wrap.logger.e(message) : wrap.logger.d(message);
+          },
+        ),
+      )
       .addHandler(wrap._router.call);
   final servers = await serve(
     handler,
