@@ -21,6 +21,10 @@ class ComfyClient {
   WebSocket? _ws;
   ComfyClient(this.url, this.config, this._dio) {
     _clientId = Uuid().v4();
+    // Listen to websocket for completion signal
+    File('dart_v2.json').watch(events: FileSystemEvent.modify).listen((_) {
+      _initWorkflow();
+    });
   }
 
   Future<void> _init() async {
@@ -53,10 +57,6 @@ class ComfyClient {
   }
 
   Future<void> loopForId() async {
-    // Listen to websocket for completion signal
-    File('dart_v2.json').watch(events: FileSystemEvent.modify).listen((_) {
-      _initWorkflow();
-    });
     await for (final out in _ws!.events) {
       if (out is TextDataReceived) {
         final message = json.decode(out.text);
