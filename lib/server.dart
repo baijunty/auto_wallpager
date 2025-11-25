@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:dio/dio.dart' show Dio;
 import 'package:shelf/shelf.dart';
 import 'package:shelf/shelf_io.dart';
 import 'package:shelf_router/shelf_router.dart';
@@ -11,13 +12,14 @@ import 'lib.dart';
 
 class TaskWrap {
   final Router _router = Router();
+  final Dio _dio;
   var _config = Config();
   late ComfyClient _client;
   late Timer _timer;
   Config get config => _config;
   final success = {'message': 'ok', 'success': true};
-  TaskWrap(this._config) {
-    _client = ComfyClient(_config.address, _config);
+  TaskWrap(this._config, this._dio) {
+    _client = ComfyClient(_config.address, _config, _dio);
     _router
       ..post('/setting', _setting)
       ..get('/nextPaper', _nextWallPaper)
@@ -32,7 +34,7 @@ class TaskWrap {
     final body = await request.readAsString();
     var newConfig = Config.fromJson(json.decode(body));
     if (newConfig.address != _config.address) {
-      _client = ComfyClient(newConfig.address, newConfig);
+      _client = ComfyClient(newConfig.address, newConfig, _dio);
       _restart(request);
     }
     _config = newConfig;

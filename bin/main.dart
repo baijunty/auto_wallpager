@@ -10,6 +10,12 @@ void main(List<String> arguments) async {
   var parser = _createArgParser();
   try {
     var args = parser.parse(arguments);
+    var dio = Dio(
+      BaseOptions(
+        sendTimeout: Duration(seconds: 30),
+        receiveTimeout: Duration(seconds: 90),
+      ),
+    );
     if (args['deamon']) {
       var path = args['config'];
       var file = File(path);
@@ -26,9 +32,9 @@ void main(List<String> arguments) async {
       } else {
         config = Config.fromJson(json.decode(file.readAsStringSync()));
       }
-      runServer(TaskWrap(config));
+      runServer(TaskWrap(config, dio));
     } else {
-      await Dio().get('http://127.0.0.1:8987/nextPaper');
+      dio.get('http://127.0.0.1:8987/nextPaper');
     }
   } catch (e) {
     print('参数错误$e');

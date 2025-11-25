@@ -14,12 +14,12 @@ class ComfyClient {
   final String url;
   late String _clientId;
   late Map<String, dynamic> workflow;
-  final Dio _dio = Dio();
+  final Dio _dio;
   final _queue = <String>[];
   final completed = <String>[];
   final Config config;
   WebSocket? _ws;
-  ComfyClient(this.url, this.config) {
+  ComfyClient(this.url, this.config, this._dio) {
     _clientId = Uuid().v4();
   }
 
@@ -69,8 +69,11 @@ class ComfyClient {
             _queue.remove(data['prompt_id']);
           }
         }
+      } else if (out is CloseReceived) {
+        print('Connection closed');
+        _ws = null;
+        break;
       }
-      // Previews are binary data, we ignore them in this loop
     }
   }
 
