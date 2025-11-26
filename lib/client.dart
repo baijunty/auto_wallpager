@@ -10,7 +10,7 @@ import 'package:uuid/uuid.dart';
 import 'package:web_socket/web_socket.dart';
 
 import 'config.dart';
-import 'workflowTemplate.dart';
+import 'workflow_template.dart';
 
 class ComfyClient {
   final String url;

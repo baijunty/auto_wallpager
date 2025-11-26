@@ -1,4 +1,4 @@
-var htmlTemplate = """
+final htmlTemplate = """
 <!DOCTYPE html>
 <html lang="zh">
 <head>

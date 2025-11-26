@@ -1,4 +1,4 @@
-var template = {
+final template = {
   "client_id": "d1012444bb54443db9fe264096e964f9",
   "prompt": {
     "15": {
