@@ -14,16 +14,18 @@ import 'lib.dart';
 class TaskWrap {
   final Router _router = Router();
   final Dio _dio;
-  var _config = Config();
+  late Config _config;
   late ComfyClient _client;
   late Timer _timer;
-  final logger = Logger(
-    output: AdvancedFileOutput(path: 'wallpaper.log', overrideExisting: true),
-  );
+  final String _configFilePath;
+  final logger = Logger(output: ConsoleOutput());
   Config get config => _config;
-  final success = {'message': 'ok', 'success': true};
-  TaskWrap(this._config, this._dio) {
+  final _success = {'message': 'ok', 'success': true};
+  TaskWrap(this._configFilePath, this._dio) {
     logger.e('start server');
+    _config = Config.fromJson(
+      json.decode(File(_configFilePath).readAsStringSync()),
+    );
     _client = ComfyClient(_config.address, _config, _dio, logger: logger);
     _router
       ..post('/setting', _setting)
@@ -38,12 +40,12 @@ class TaskWrap {
   Future<Response> _setting(Request request) async {
     final body = await request.readAsString();
     var newConfig = Config.fromJson(json.decode(body));
-    if (newConfig.address != _config.address) {
-      _client = ComfyClient(newConfig.address, newConfig, _dio, logger: logger);
-      _restart(request);
-    }
+    File(_configFilePath).writeAsStringSync(json.encode(newConfig.toJson()));
+    _client.close();
+    _client = ComfyClient(newConfig.address, newConfig, _dio, logger: logger);
+    _restart(request);
     _config = newConfig;
-    return Response.ok(json.encode(success));
+    return Response.ok(json.encode(_success));
   }
 
   Future<void> _next() async {
@@ -61,7 +63,7 @@ class TaskWrap {
     try {
       await _next();
       _restart(req);
-      return Response.ok(json.encode(success));
+      return Response.ok(json.encode(_success));
     } catch (e) {
       return Response.internalServerError(
         body: json.encode({'message': '$e', 'success': false}),
@@ -71,7 +73,7 @@ class TaskWrap {
 
   Future<Response> _pause(Request req) async {
     _timer.cancel();
-    return Response.ok(json.encode(success));
+    return Response.ok(json.encode(_success));
   }
 
   Future<Response> _restart(Request req) async {
@@ -79,7 +81,7 @@ class TaskWrap {
     _timer = Timer.periodic(Duration(minutes: _config.duration), (timer) async {
       await _next();
     });
-    return Response.ok(json.encode(success));
+    return Response.ok(json.encode(_success));
   }
 }
 
