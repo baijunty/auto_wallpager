@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'dart:convert';
-import 'dart:io';
 import 'dart:math';
 import 'dart:typed_data';
 
@@ -11,26 +10,20 @@ import 'package:uuid/uuid.dart';
 import 'package:web_socket/web_socket.dart';
 
 import 'config.dart';
+import 'workflowTemplate.dart';
 
 class ComfyClient {
   final String url;
   late String _clientId;
-  late Map<String, dynamic> workflow;
+  late Map<String, dynamic> workflow = template;
   final Dio _dio;
   final _queue = <String>[];
   final completed = <String>[];
   final Config config;
   final Logger? logger;
-  late StreamSubscription<FileSystemEvent> _watch;
   WebSocket? _ws;
   ComfyClient(this.url, this.config, this._dio, {this.logger}) {
     _clientId = Uuid().v4();
-    _watch = File('dart_v2.json').watch(events: FileSystemEvent.modify).listen((
-      _,
-    ) {
-      logger?.d('Reloading workflow');
-      _initWorkflow();
-    });
   }
 
   Future<void> _init() async {
@@ -53,7 +46,6 @@ class ComfyClient {
   }
 
   Future<void> _initWorkflow() async {
-    workflow = json.decode(File('dart_v2.json').readAsStringSync());
     workflow['client_id'] = _clientId;
     var prompt = workflow['prompt'] as Map<String, dynamic>;
     prompt['26']['inputs']['model'] = config.tagModel;
@@ -87,7 +79,6 @@ class ComfyClient {
   }
 
   Future<void> close() async {
-    _watch.cancel();
     await _ws?.close();
   }
 

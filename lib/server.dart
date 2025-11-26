@@ -9,6 +9,7 @@ import 'package:shelf/shelf_io.dart';
 import 'package:shelf_router/shelf_router.dart';
 
 import 'config.dart';
+import 'htmlTemplate.dart';
 import 'lib.dart';
 
 class TaskWrap {
@@ -28,7 +29,9 @@ class TaskWrap {
     );
     _client = ComfyClient(_config.address, _config, _dio, logger: logger);
     _router
+      ..get('/', _mainPage)
       ..post('/setting', _setting)
+      ..get('/config', (req) => Response.ok(json.encode(_config.toJson())))
       ..get('/nextPaper', _nextWallPaper)
       ..get('/pause', _pause)
       ..get('/restart', _restart);
@@ -46,6 +49,13 @@ class TaskWrap {
     _restart(request);
     _config = newConfig;
     return Response.ok(json.encode(_success));
+  }
+
+  Future<Response> _mainPage(Request request) async {
+    return Response.ok(
+      htmlTemplate,
+      headers: {'Content-Type': 'text/html; charset=utf-8'},
+    );
   }
 
   Future<void> _next() async {
@@ -101,6 +111,7 @@ Future<void> runServer(TaskWrap wrap) async {
     8987,
     poweredByHeader: 'wallpager',
   );
+  print('visit http://127.0.0.1:8987 to configure');
   servers.autoCompress = true;
   wrap._next();
 }

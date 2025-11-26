@@ -1,0 +1,140 @@
+var template = {
+  "client_id": "d1012444bb54443db9fe264096e964f9",
+  "prompt": {
+    "15": {
+      "inputs": {
+        "text": ["43", 0],
+        "clip": ["36", 1],
+      },
+      "class_type": "CLIPTextEncode",
+      "_meta": {"title": "CLIP文本编码器"},
+    },
+    "16": {
+      "inputs": {
+        "text": ["50", 0],
+        "clip": ["36", 1],
+      },
+      "class_type": "CLIPTextEncode",
+      "_meta": {"title": "CLIP文本编码器"},
+    },
+    "19": {
+      "inputs": {
+        "samples": ["40", 0],
+        "vae": ["36", 2],
+      },
+      "class_type": "VAEDecode",
+      "_meta": {"title": "VAE解码"},
+    },
+    "26": {
+      "inputs": {"model": "dart-v2-sft"},
+      "class_type": "DanbooruTagsTransformerLoader",
+      "_meta": {"title": "Dart Load"},
+    },
+    "27": {
+      "inputs": {
+        "copyright": "",
+        "character": "",
+        "rating": "general",
+        "aspect_ratio": "wide",
+        "length": "long",
+        "general": "1girl,solo,",
+        "identity": "none",
+      },
+      "class_type": "DanbooruTagsTransformerComposePromptV2",
+      "_meta": {"title": "Dart Compose Prompt V2"},
+    },
+    "36": {
+      "inputs": {"ckpt_name": "waiNSFWIllustrious_v150.safetensors"},
+      "class_type": "CheckpointLoaderSimple",
+      "_meta": {"title": "Checkpoint加载器(简易)"},
+    },
+    "37": {
+      "inputs": {"width": 1280, "height": 720, "batch_size": 1},
+      "class_type": "EmptyLatentImage",
+      "_meta": {"title": "空Latent"},
+    },
+    "40": {
+      "inputs": {
+        "seed": 932996999690871,
+        "steps": 30,
+        "cfg": 7.5,
+        "sampler_name": "euler_ancestral",
+        "scheduler": "simple",
+        "denoise": 1,
+        "model": ["36", 0],
+        "positive": ["15", 0],
+        "negative": ["16", 0],
+        "latent_image": ["37", 0],
+      },
+      "class_type": "KSampler",
+      "_meta": {"title": "K采样器"},
+    },
+    "43": {
+      "inputs": {
+        "prompt": ["27", 0],
+        "seed": 3945587738,
+        "animagine_order": true,
+        "ban_tags": ["50", 0],
+        "remove_tags": ["50", 0],
+        "model": ["26", 0],
+        "tokenizer": ["26", 1],
+      },
+      "class_type": "DanbooruTagsTransformerGenerate",
+      "_meta": {"title": "Dart Generate"},
+    },
+    "45": {
+      "inputs": {
+        "upscale_model": ["46", 0],
+        "image": ["19", 0],
+      },
+      "class_type": "ImageUpscaleWithModel",
+      "_meta": {"title": "图像通过模型放大"},
+    },
+    "46": {
+      "inputs": {"model_name": "4x-AnimeSharp.pth"},
+      "class_type": "UpscaleModelLoader",
+      "_meta": {"title": "放大模型加载器"},
+    },
+    "47": {
+      "inputs": {
+        "images": ["45", 0],
+      },
+      "class_type": "PreviewImage",
+      "_meta": {"title": "预览图像"},
+    },
+    "50": {
+      "inputs": {
+        "value":
+            "score_4, score_5, score_6, source_pony, source_furry, monochrome, realstic, rough sketch, fewer digits, extra digits,water mask,\nlowres, mosaic censoring, stripe, censored, bad anatomy, bad hands, text, error, missing fingers, extra digit, fewer digits, cropped, worst quality, low quality, normal quality, jpeg artifacts, signature, watermark, username, blurry,",
+      },
+      "class_type": "PrimitiveStringMultiline",
+      "_meta": {"title": "字符串（多行）"},
+    },
+  },
+  "extra_data": {
+    "extra_pnginfo": {
+      "workflow": {
+        "id": "0ed6ea76-8564-4044-839f-2d3da05cda2f",
+        "revision": 0,
+        "last_node_id": 51,
+        "last_link_id": 84,
+        "nodes": [],
+        "groups": [],
+        "config": {},
+        "extra": {
+          "ds": {
+            "scale": 0.79737870400521,
+            "offset": [941.8443155600476, 223.19734558448158],
+          },
+          "workflowRendererVersion": "Vue",
+          "frontendVersion": "1.33.5",
+          "VHS_latentpreview": false,
+          "VHS_latentpreviewrate": 0,
+          "VHS_MetadataImage": true,
+          "VHS_KeepIntermediate": true,
+        },
+        "version": 0.4,
+      },
+    },
+  },
+};
