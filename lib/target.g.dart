@@ -6,10 +6,12 @@ part of 'target.dart';
 // JsonSerializableGenerator
 // **************************************************************************
 
-Target _$TargetFromJson(Map<String, dynamic> json) =>
-    Target(json['name'] as String?, json['product'] as String?);
+Target _$TargetFromJson(Map<String, dynamic> json) => Target(
+  name: json['name'] as String? ?? '',
+  series: json['series'] as String? ?? '',
+);
 
 Map<String, dynamic> _$TargetToJson(Target instance) => <String, dynamic>{
   'name': instance.name,
-  'product': instance.product,
+  'series': instance.series,
 };

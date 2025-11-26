@@ -21,7 +21,7 @@ class Config {
     this.address = 'http://127.0.0.1:8188',
     this.duration = 5,
     this.model,
-    this.tagModel = "dart-v2-sft",
+    this.tagModel = "dart-v2-moe-sft",
     this.rating = 'general',
     this.blockTags = const ['nsfw'],
     this.target,

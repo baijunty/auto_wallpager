@@ -5,13 +5,13 @@ part 'target.g.dart';
 
 @JsonSerializable()
 class Target {
-  String? name;
-  String? product;
+  String name;
+  String series;
 
-  Target(this.name, this.product);
+  Target({this.name = '', this.series = ''});
 
   @override
-  String toString() => 'Target(name: $name, product: $product)';
+  String toString() => 'Target(name: $name, series: $series)';
 
   factory Target.fromJson(Map<String, dynamic> json) {
     return _$TargetFromJson(json);
@@ -19,8 +19,8 @@ class Target {
 
   Map<String, dynamic> toJson() => _$TargetToJson(this);
 
-  Target copyWith({String? name, String? product}) {
-    return Target(name ?? this.name, product ?? this.product);
+  Target copyWith({String? name, String? series}) {
+    return Target(name: name ?? this.name, series: series ?? this.series);
   }
 
   @override
@@ -32,5 +32,5 @@ class Target {
   }
 
   @override
-  int get hashCode => name.hashCode ^ product.hashCode;
+  int get hashCode => name.hashCode ^ series.hashCode;
 }

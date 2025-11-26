@@ -18,7 +18,7 @@ class TaskWrap {
   late ComfyClient _client;
   late Timer _timer;
   final String _configFilePath;
-  final logger = Logger(output: ConsoleOutput());
+  final logger = Logger(output: ConsoleOutput(), level: Level.debug);
   Config get config => _config;
   final _success = {'message': 'ok', 'success': true};
   TaskWrap(this._configFilePath, this._dio) {

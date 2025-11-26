@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'dart:math';
@@ -20,11 +21,13 @@ class ComfyClient {
   final completed = <String>[];
   final Config config;
   final Logger? logger;
+  late StreamSubscription<FileSystemEvent> _watch;
   WebSocket? _ws;
   ComfyClient(this.url, this.config, this._dio, {this.logger}) {
     _clientId = Uuid().v4();
-    // Listen to websocket for completion signal
-    File('dart_v2.json').watch(events: FileSystemEvent.modify).listen((_) {
+    _watch = File('dart_v2.json').watch(events: FileSystemEvent.modify).listen((
+      _,
+    ) {
       logger?.d('Reloading workflow');
       _initWorkflow();
     });
@@ -57,7 +60,9 @@ class ComfyClient {
     prompt['36']['inputs']['ckpt_name'] = config.model;
     prompt['27']['inputs']['rating'] = config.rating;
     prompt['27']['inputs']['character'] = config.target?.name ?? '';
-    prompt['27']['inputs']['copyright'] = config.target?.product ?? '';
+    prompt['27']['inputs']['copyright'] = config.target?.series ?? '';
+    prompt['50']['inputs']['value'] =
+        '${prompt['50']['inputs']['value']},${config.blockTags?.fold('', (acc, s) => '$acc,$s')}';
   }
 
   Future<void> loopForId() async {
@@ -82,6 +87,7 @@ class ComfyClient {
   }
 
   Future<void> close() async {
+    _watch.cancel();
     await _ws?.close();
   }
 
