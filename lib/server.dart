@@ -17,10 +17,13 @@ class TaskWrap {
   var _config = Config();
   late ComfyClient _client;
   late Timer _timer;
-  final logger = Logger();
+  final logger = Logger(
+    output: AdvancedFileOutput(path: 'wallpaper.log', overrideExisting: true),
+  );
   Config get config => _config;
   final success = {'message': 'ok', 'success': true};
   TaskWrap(this._config, this._dio) {
+    logger.e('start server');
     _client = ComfyClient(_config.address, _config, _dio, logger: logger);
     _router
       ..post('/setting', _setting)
@@ -36,7 +39,7 @@ class TaskWrap {
     final body = await request.readAsString();
     var newConfig = Config.fromJson(json.decode(body));
     if (newConfig.address != _config.address) {
-      _client = ComfyClient(newConfig.address, newConfig, _dio);
+      _client = ComfyClient(newConfig.address, newConfig, _dio, logger: logger);
       _restart(request);
     }
     _config = newConfig;
@@ -49,7 +52,7 @@ class TaskWrap {
     final temp = File('temp.png');
     temp.writeAsBytesSync(image);
     logger.d('set wallpaper');
-    if (setWallpaper(temp.path) != 0) {
+    if (setWallpaper(temp.absolute.path) != 0) {
       logger.d('failed to set wallpaper');
     }
   }
