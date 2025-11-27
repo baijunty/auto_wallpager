@@ -219,6 +219,11 @@ final htmlTemplate = """
                 </div>
                 
                 <div class="form-group">
+                    <label for="authorization">Authorization</label>
+                    <input type="text" class="form-control" id="authorization" name="authorization" placeholder="例如: Bearer your-token-here">
+                </div>
+                
+                <div class="form-group">
                     <label for="duration">切换间隔(分钟)</label>
                     <input type="number" class="form-control" id="duration" name="duration" min="1" placeholder="例如: 5">
                 </div>
@@ -244,16 +249,29 @@ final htmlTemplate = """
                     </div>
                 </div>
                 
-                <div class="form-group">
-                    <label for="rating">评级设置</label>
-                    <select class="form-control" id="rating" name="rating">
-                        <option value="swf">SWF</option>
-                        <option value="general">General</option>
-                        <option value="sensitive">Sensitive</option>
-                        <option value="nsfw">NSFW</option>
-                        <option value="questionable">Questionable</option>
-                        <option value="explicit">Explicit</option>
-                    </select>
+                <div class="form-row">
+                    <div class="form-col">
+                        <div class="form-group">
+                            <label for="upscaleModel">放大模型</label>
+                            <select class="form-control" id="upscaleModel" name="upscaleModel">
+                                <option value="">加载中...</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="form-col">
+                        <div class="form-group">
+                            <label for="rating">评级设置</label>
+                            <select class="form-control" id="rating" name="rating">
+                                <option value="swf">SWF</option>
+                                <option value="general">General</option>
+                                <option value="sensitive">Sensitive</option>
+                                <option value="nsfw">NSFW</option>
+                                <option value="questionable">Questionable</option>
+                                <option value="explicit">Explicit</option>
+                            </select>
+                        </div>
+                    </div>
                 </div>
                 
                 <div class="form-group">
@@ -291,6 +309,7 @@ final htmlTemplate = """
     </div>
 
     <script>
+        var config = {};
         document.addEventListener('DOMContentLoaded', function() {
             // 获取表单元素
             const form = document.getElementById('configForm');
@@ -300,20 +319,24 @@ final htmlTemplate = """
             // 获取当前配置
             fetch('/config')
                 .then(response => response.json())
-                .then(config => {
+                .then(function (config){
+                    this.config = config;
                     document.getElementById('address').value = config.address || '';
                     document.getElementById('duration').value = config.duration || 5;
+                    document.getElementById('authorization').value = config.authorization || '';
                     document.getElementById('tagModel').value = config.tag_model || 'dart-v2-moe-sft';
+                    document.getElementById('upscaleModel').value = config.upscaleModel || '';
                     document.getElementById('rating').value = config.rating || 'general';
                     document.getElementById('blockTags').value = Array.isArray(config.block_tags) ? config.block_tags.join(', ') : '';
-                    
-                    if (config.target) {
-                        document.getElementById('targetName').value = config.target.name || '';
-                        document.getElementById('targetSeries').value = config.target.series || '';
-                    }
-                    
-                    // 加载模型选项
-                    loadModels(config.address || 'http://127.0.0.1:8188', config.model);
+                        
+                        if (config.target) {
+                            document.getElementById('targetName').value = config.target.name || '';
+                            document.getElementById('targetSeries').value = config.target.series || '';
+                        }
+                        
+                        // 加载模型选项
+                        loadModels(config.address || 'http://127.0.0.1:8188', config.model);
+                        loadUpscaleModels(config.address || 'http://127.0.0.1:8188', config.upscaleModel);
                 })
                 .catch(error => {
                     console.error('获取配置失败:', error);
@@ -327,13 +350,12 @@ final htmlTemplate = """
                 let baseUrl = address;
                 try {
                     const url = new URL(address);
-                    baseUrl = url.origin;
                 } catch (e) {
                     // 如果不是有效的URL，使用默认值
                     baseUrl = 'http://127.0.0.1:8188';
                 }
                 
-                fetch(baseUrl + '/models/checkpoints')
+                fetch(baseUrl + '/models/checkpoints', {headers: {"Authorization": this.config.authorization}})
                     .then(response => response.json())
                     .then(models => {
                         // 清空现有选项
@@ -362,11 +384,54 @@ final htmlTemplate = """
                     });
             }
             
+            // 加载放大模型列表
+            function loadUpscaleModels(address, currentModel) {
+                const upscaleModelSelect = document.getElementById('upscaleModel');
+                
+                // 从地址中提取主机和端口
+                let baseUrl = address;
+                try {
+                    const url = new URL(address);
+                } catch (e) {
+                    // 如果不是有效的URL，使用默认值
+                    baseUrl = 'http://127.0.0.1:8188';
+                }
+                
+                fetch(baseUrl + '/models/upscale_models', {headers: {"Authorization": this.config.authorization}})
+                    .then(response => response.json())
+                    .then(models => {
+                        // 清空现有选项
+                        upscaleModelSelect.innerHTML = '';
+                        
+                        // 添加空选项
+                        const emptyOption = document.createElement('option');
+                        emptyOption.value = '';
+                        emptyOption.textContent = '请选择放大模型';
+                        upscaleModelSelect.appendChild(emptyOption);
+                        
+                        // 添加模型选项
+                        models.forEach(model => {
+                            const option = document.createElement('option');
+                            option.value = model;
+                            option.textContent = model;
+                            if (model === currentModel) {
+                                option.selected = true;
+                            }
+                            upscaleModelSelect.appendChild(option);
+                        });
+                    })
+                    .catch(error => {
+                        console.error('加载放大模型列表失败:', error);
+                        upscaleModelSelect.innerHTML = '<option value="">加载放大模型失败</option>';
+                    });
+            }
+            
             // 监听地址变化以重新加载模型
-            document.getElementById('address').addEventListener('change', function() {
+            document.getElementById('address').addEventListener('focusout', function() {
                 const address = this.value.trim();
                 if (address) {
                     loadModels(address, null);
+                    loadUpscaleModels(address, null);
                 }
             });
             
@@ -383,8 +448,10 @@ final htmlTemplate = """
                 const config = {
                     address: formData.get('address'),
                     duration: parseInt(formData.get('duration')) || 5,
+                    authorization: formData.get('authorization') || '',
                     model: formData.get('model') || undefined,
                     tag_model: formData.get('tagModel'),
+                    upscaleModel: formData.get('upscaleModel') || '4x-AnimeSharp.pth',
                     rating: formData.get('rating'),
                     block_tags: formData.get('blockTags') ? 
                         formData.get('blockTags').split(',').map(tag => tag.trim()).filter(tag => tag) : [],

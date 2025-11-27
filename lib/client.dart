@@ -29,12 +29,10 @@ class ComfyClient {
   Future<void> _init() async {
     try {
       if (_ws == null) {
-        var uri = Uri.parse(url);
-        _ws = await WebSocket.connect(
-          Uri.parse(
-            '${uri.scheme == 'http' ? 'ws' : 'wss'}://${uri.host}:${uri.port}/ws?clientId=$_clientId',
-          ),
-        );
+        var uri =
+            '${url.startsWith('https') ? 'wss' : 'ws'}${url.substring(url.startsWith('https') ? 5 : 4)}/ws?clientId=$_clientId';
+        print(uri);
+        _ws = await WebSocket.connect(Uri.parse(uri));
         _initWorkflow();
         loopForId();
       }
@@ -89,7 +87,10 @@ class ComfyClient {
     final response = await _dio.post<Map<String, dynamic>>(
       '$url/prompt',
       data: json.encode(workflow),
-      options: Options(responseType: ResponseType.json),
+      options: Options(
+        responseType: ResponseType.json,
+        headers: {'Authorization': config.authorization},
+      ),
     );
     logger?.d(response.data);
     return response.data!;
@@ -109,7 +110,10 @@ class ComfyClient {
     final urlValues = Uri(queryParameters: data).query;
     final response = await _dio.get<Uint8List>(
       '$url/view?$urlValues',
-      options: Options(responseType: ResponseType.bytes),
+      options: Options(
+        responseType: ResponseType.bytes,
+        headers: {'Authorization': config.authorization},
+      ),
     );
     return response.data!;
   }
@@ -118,7 +122,10 @@ class ComfyClient {
     await _init();
     final response = await _dio.get<Map<String, dynamic>>(
       '$url/history/$promptId',
-      options: Options(responseType: ResponseType.json),
+      options: Options(
+        responseType: ResponseType.json,
+        headers: {'Authorization': config.authorization},
+      ),
     );
     return response.data!;
   }

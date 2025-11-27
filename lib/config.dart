@@ -8,10 +8,12 @@ part 'config.g.dart';
 @JsonSerializable()
 class Config {
   String address;
+  String authorization;
   int duration;
   String? model;
   @JsonKey(name: 'tag_model')
   String tagModel;
+  String upscaleModel;
   String rating;
   @JsonKey(name: 'block_tags')
   List<String>? blockTags;
@@ -19,9 +21,11 @@ class Config {
 
   Config({
     this.address = 'http://127.0.0.1:8188',
+    this.authorization = '',
     this.duration = 5,
     this.model,
     this.tagModel = "dart-v2-moe-sft",
+    this.upscaleModel = '4x-AnimeSharp.pth',
     this.rating = 'general',
     this.blockTags = const ['nsfw'],
     this.target,
@@ -29,7 +33,7 @@ class Config {
 
   @override
   String toString() {
-    return 'Config(address: $address, duration: $duration, model: $model, tagModel: $tagModel, rating: $rating, blockTags: $blockTags, target: $target)';
+    return 'Config(address: $address, authorization: $authorization, duration: $duration, model: $model, tagModel: $tagModel, upscaleModel: $upscaleModel, rating: $rating, blockTags: $blockTags, target: $target)';
   }
 
   factory Config.fromJson(Map<String, dynamic> json) {
@@ -40,18 +44,22 @@ class Config {
 
   Config copyWith({
     String? address,
+    String? authorization,
     int? duration,
     String? model,
     String? tagModel,
+    String? upscaleModel,
     String? rating,
     List<String>? blockTags,
     Target? target,
   }) {
     return Config(
       address: address ?? this.address,
+      authorization: authorization ?? this.authorization,
       duration: duration ?? this.duration,
       model: model ?? this.model,
       tagModel: tagModel ?? this.tagModel,
+      upscaleModel: upscaleModel ?? this.upscaleModel,
       rating: rating ?? this.rating,
       blockTags: blockTags ?? this.blockTags,
       target: target ?? this.target,
@@ -69,9 +77,11 @@ class Config {
   @override
   int get hashCode =>
       address.hashCode ^
+      authorization.hashCode ^
       duration.hashCode ^
       model.hashCode ^
       tagModel.hashCode ^
+      upscaleModel.hashCode ^
       rating.hashCode ^
       blockTags.hashCode ^
       target.hashCode;
