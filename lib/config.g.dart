@@ -22,6 +22,8 @@ Config _$ConfigFromJson(Map<String, dynamic> json) => Config(
   target: json['target'] == null
       ? null
       : Target.fromJson(json['target'] as Map<String, dynamic>),
+  width: (json['width'] as num?)?.toInt() ?? 1366,
+  height: (json['height'] as num?)?.toInt() ?? 768,
 );
 
 Map<String, dynamic> _$ConfigToJson(Config instance) => <String, dynamic>{
@@ -34,4 +36,6 @@ Map<String, dynamic> _$ConfigToJson(Config instance) => <String, dynamic>{
   'rating': instance.rating,
   'block_tags': instance.blockTags,
   'target': instance.target,
+  'width': instance.width,
+  'height': instance.height,
 };

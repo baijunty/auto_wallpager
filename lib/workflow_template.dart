@@ -49,7 +49,7 @@ final template = {
       "_meta": {"title": "Checkpoint加载器(简易)"},
     },
     "37": {
-      "inputs": {"width": 1280, "height": 720, "batch_size": 1},
+      "inputs": {"width": 1366, "height": 768, "batch_size": 1},
       "class_type": "EmptyLatentImage",
       "_meta": {"title": "空Latent"},
     },
@@ -122,10 +122,7 @@ final template = {
         "groups": [],
         "config": {},
         "extra": {
-          "ds": {
-            "scale": 0.79737870400521,
-            "offset": [941.8443155600476, 223.19734558448158],
-          },
+          "ds": {},
           "workflowRendererVersion": "Vue",
           "frontendVersion": "1.33.5",
           "VHS_latentpreview": false,

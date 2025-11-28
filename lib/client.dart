@@ -15,7 +15,7 @@ import 'workflow_template.dart';
 class ComfyClient {
   final String url;
   late String _clientId;
-  late Map<String, dynamic> workflow = template;
+  final Map<String, dynamic> workflow = template;
   final Dio _dio;
   final _queue = <String>[];
   final completed = <String>[];
@@ -50,6 +50,25 @@ class ComfyClient {
     prompt['27']['inputs']['rating'] = config.rating;
     prompt['27']['inputs']['character'] = config.target?.name ?? '';
     prompt['27']['inputs']['copyright'] = config.target?.series ?? '';
+    switch (config.width / config.height) {
+      case >= 2:
+        prompt['27']['inputs']['aspect_ratio'] = 'ultra_wide';
+        break;
+      case >= 9 / 8 && < 2:
+        prompt['27']['inputs']['aspect_ratio'] = 'wide';
+        break;
+      case >= 8 / 9 && < 9 / 8:
+        prompt['27']['inputs']['aspect_ratio'] = 'square';
+        break;
+      case >= 9 / 8 && < 0.5:
+        prompt['27']['inputs']['aspect_ratio'] = 'tall';
+        break;
+      default:
+        prompt['27']['inputs']['aspect_ratio'] = 'ultra_tall';
+        break;
+    }
+    prompt['37']['inputs']['width'] = config.width;
+    prompt['37']['inputs']['height'] = config.height;
     prompt['50']['inputs']['value'] =
         '${prompt['50']['inputs']['value']},${config.blockTags?.fold('', (acc, s) => '$acc,$s')}';
   }

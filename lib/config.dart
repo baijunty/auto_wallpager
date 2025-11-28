@@ -18,6 +18,8 @@ class Config {
   @JsonKey(name: 'block_tags')
   List<String>? blockTags;
   Target? target;
+  int width;
+  int height;
 
   Config({
     this.address = 'http://127.0.0.1:8188',
@@ -29,11 +31,13 @@ class Config {
     this.rating = 'general',
     this.blockTags = const ['nsfw'],
     this.target,
+    this.width = 1366,
+    this.height = 768,
   });
 
   @override
   String toString() {
-    return 'Config(address: $address, authorization: $authorization, duration: $duration, model: $model, tagModel: $tagModel, upscaleModel: $upscaleModel, rating: $rating, blockTags: $blockTags, target: $target)';
+    return 'Config(address: $address, authorization: $authorization, duration: $duration, model: $model, tagModel: $tagModel, upscaleModel: $upscaleModel, rating: $rating, blockTags: $blockTags, target: $target, width: $width, height: $height)';
   }
 
   factory Config.fromJson(Map<String, dynamic> json) {
@@ -52,6 +56,8 @@ class Config {
     String? rating,
     List<String>? blockTags,
     Target? target,
+    int? width,
+    int? height,
   }) {
     return Config(
       address: address ?? this.address,
@@ -63,6 +69,8 @@ class Config {
       rating: rating ?? this.rating,
       blockTags: blockTags ?? this.blockTags,
       target: target ?? this.target,
+      width: width ?? this.width,
+      height: height ?? this.height,
     );
   }
 
@@ -84,5 +92,7 @@ class Config {
       upscaleModel.hashCode ^
       rating.hashCode ^
       blockTags.hashCode ^
-      target.hashCode;
+      target.hashCode ^
+      width.hashCode ^
+      height.hashCode;
 }

@@ -231,6 +231,22 @@ final htmlTemplate = """
                 <div class="form-row">
                     <div class="form-col">
                         <div class="form-group">
+                            <label for="width">宽度</label>
+                            <input type="number" class="form-control" id="width" name="width" min="1" placeholder="例如: 1366">
+                        </div>
+                    </div>
+                    
+                    <div class="form-col">
+                        <div class="form-group">
+                            <label for="height">高度</label>
+                            <input type="number" class="form-control" id="height" name="height" min="1" placeholder="例如: 768">
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-col">
+                        <div class="form-group">
                             <label for="model">模型选择</label>
                             <select class="form-control" id="model" name="model">
                                 <option value="">加载中...</option>
@@ -324,6 +340,8 @@ final htmlTemplate = """
                     document.getElementById('address').value = config.address || '';
                     document.getElementById('duration').value = config.duration || 5;
                     document.getElementById('authorization').value = config.authorization || '';
+                    document.getElementById('width').value = config.width || 1366;
+                    document.getElementById('height').value = config.height || 768;
                     document.getElementById('tagModel').value = config.tag_model || 'dart-v2-moe-sft';
                     document.getElementById('upscaleModel').value = config.upscaleModel || '';
                     document.getElementById('rating').value = config.rating || 'general';
@@ -449,6 +467,8 @@ final htmlTemplate = """
                     address: formData.get('address'),
                     duration: parseInt(formData.get('duration')) || 5,
                     authorization: formData.get('authorization') || '',
+                    width: parseInt(formData.get('width')) || 1366,
+                    height: parseInt(formData.get('height')) || 768,
                     model: formData.get('model') || undefined,
                     tag_model: formData.get('tagModel'),
                     upscaleModel: formData.get('upscaleModel') || '4x-AnimeSharp.pth',
