@@ -26,13 +26,16 @@ void main(List<String> arguments) async {
         print(parser.usage);
         exit(1);
       }
-      var config = Config(address: url, duration: time);
+      var config = Config(
+        address: url,
+        duration: time,
+        model: 'waiNSFWIllustrious_v150.safetensors',
+      );
       if (!file.existsSync()) {
         file.writeAsStringSync(json.encode(config));
       } else {
         config = Config.fromJson(json.decode(file.readAsStringSync()));
       }
-      print(file.absolute.path);
       runServer(TaskWrap(file.absolute.path, dio));
     } else {
       dio.get('http://127.0.0.1:8987/nextPaper');

@@ -23,7 +23,6 @@ class TaskWrap {
   Config get config => _config;
   final _success = {'message': 'ok', 'success': true};
   TaskWrap(this._configFilePath, this._dio) {
-    logger.e('start server');
     _config = Config.fromJson(
       json.decode(File(_configFilePath).readAsStringSync()),
     );
@@ -59,13 +58,17 @@ class TaskWrap {
   }
 
   Future<void> _next() async {
-    final images = await _client.getImages();
-    final image = images.first;
-    final temp = File('temp.png');
-    temp.writeAsBytesSync(image);
-    logger.d('set wallpaper');
-    if (setWallpaper(temp.absolute.path) != 0) {
-      logger.d('failed to set wallpaper');
+    try {
+      final images = await _client.getImages();
+      final image = images.first;
+      final temp = File('temp.png');
+      temp.writeAsBytesSync(image);
+      logger.d('set wallpaper');
+      if (setWallpaper(temp.absolute.path) != 0) {
+        logger.d('failed to set wallpaper');
+      }
+    } catch (e) {
+      logger.e(e);
     }
   }
 
@@ -113,5 +116,4 @@ Future<void> runServer(TaskWrap wrap) async {
   );
   print('visit http://127.0.0.1:8987 to configure');
   servers.autoCompress = true;
-  wrap._next();
 }

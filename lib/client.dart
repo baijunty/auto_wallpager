@@ -31,7 +31,6 @@ class ComfyClient {
       if (_ws == null) {
         var uri =
             '${url.startsWith('https') ? 'wss' : 'ws'}${url.substring(url.startsWith('https') ? 5 : 4)}/ws?clientId=$_clientId';
-        print(uri);
         _ws = await WebSocket.connect(Uri.parse(uri));
         _initWorkflow();
         loopForId();

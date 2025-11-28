@@ -23,7 +23,7 @@ class Config {
     this.address = 'http://127.0.0.1:8188',
     this.authorization = '',
     this.duration = 5,
-    this.model,
+    required this.model,
     this.tagModel = "dart-v2-moe-sft",
     this.upscaleModel = '4x-AnimeSharp.pth',
     this.rating = 'general',
