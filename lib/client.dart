@@ -67,6 +67,7 @@ class ComfyClient {
         prompt['27']['inputs']['aspect_ratio'] = 'ultra_tall';
         break;
     }
+    prompt['46']['inputs']['model_name'] = config.upscaleModel;
     prompt['37']['inputs']['width'] = config.width;
     prompt['37']['inputs']['height'] = config.height;
     prompt['50']['inputs']['value'] =

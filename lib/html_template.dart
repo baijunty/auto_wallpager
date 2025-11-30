@@ -279,7 +279,7 @@ final htmlTemplate = """
                         <div class="form-group">
                             <label for="rating">评级设置</label>
                             <select class="form-control" id="rating" name="rating">
-                                <option value="swf">SWF</option>
+                                <option value="sfw">sfw</option>
                                 <option value="general">General</option>
                                 <option value="sensitive">Sensitive</option>
                                 <option value="nsfw">NSFW</option>
