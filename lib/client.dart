@@ -5,7 +5,6 @@ import 'dart:typed_data';
 
 import 'package:auto_wallpager/lib.dart';
 import 'package:dio/dio.dart';
-import 'package:logger/web.dart';
 import 'package:uuid/uuid.dart';
 import 'package:web_socket/web_socket.dart';
 
@@ -20,9 +19,8 @@ class ComfyClient {
   final _queue = <String>[];
   final completed = <String>[];
   final Config config;
-  final Logger? logger;
   WebSocket? _ws;
-  ComfyClient(this.url, this.config, this._dio, {this.logger}) {
+  ComfyClient(this.url, this.config, this._dio) {
     _clientId = Uuid().v4();
   }
 
@@ -88,7 +86,7 @@ class ComfyClient {
           }
         }
       } else if (out is CloseReceived) {
-        logger?.e('Connection closed ${out.reason}');
+        print('Connection closed ${out.reason}');
         _ws = null;
         break;
       }
@@ -111,7 +109,7 @@ class ComfyClient {
         headers: {'Authorization': config.authorization},
       ),
     );
-    logger?.d(response.data);
+    print(response.data);
     return response.data!;
   }
 

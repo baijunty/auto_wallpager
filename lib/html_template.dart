@@ -325,7 +325,6 @@ final htmlTemplate = """
     </div>
 
     <script>
-        var config = {};
         document.addEventListener('DOMContentLoaded', function() {
             // 获取表单元素
             const form = document.getElementById('configForm');
@@ -336,7 +335,6 @@ final htmlTemplate = """
             fetch('/config')
                 .then(response => response.json())
                 .then(function (config){
-                    this.config = config;
                     document.getElementById('address').value = config.address || '';
                     document.getElementById('duration').value = config.duration || 5;
                     document.getElementById('authorization').value = config.authorization || '';
@@ -373,7 +371,7 @@ final htmlTemplate = """
                     baseUrl = 'http://127.0.0.1:8188';
                 }
                 
-                fetch(baseUrl + '/models/checkpoints', {headers: {"Authorization": this.config.authorization}})
+                fetch(baseUrl + '/models/checkpoints', {headers: {"Authorization": formData.get('authorization') || ''}})
                     .then(response => response.json())
                     .then(models => {
                         // 清空现有选项
@@ -415,7 +413,7 @@ final htmlTemplate = """
                     baseUrl = 'http://127.0.0.1:8188';
                 }
                 
-                fetch(baseUrl + '/models/upscale_models', {headers: {"Authorization": this.config.authorization}})
+                fetch(baseUrl + '/models/upscale_models', {headers: {"Authorization": formData.get('authorization') || ''}})
                     .then(response => response.json())
                     .then(models => {
                         // 清空现有选项
@@ -465,7 +463,7 @@ final htmlTemplate = """
                 const formData = new FormData(form);
                 const config = {
                     address: formData.get('address'),
-                    duration: parseInt(formData.get('duration')) || 5,
+                    duration: parseInt(formData.get('duration')) || 10,
                     authorization: formData.get('authorization') || '',
                     width: parseInt(formData.get('width')) || 1366,
                     height: parseInt(formData.get('height')) || 768,

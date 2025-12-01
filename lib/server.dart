@@ -3,7 +3,6 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:dio/dio.dart' show Dio;
-import 'package:logger/logger.dart';
 import 'package:shelf/shelf.dart';
 import 'package:shelf/shelf_io.dart';
 import 'package:shelf_router/shelf_router.dart';
@@ -19,14 +18,13 @@ class TaskWrap {
   late ComfyClient _client;
   late Timer _timer;
   final String _configFilePath;
-  final logger = Logger(output: ConsoleOutput(), level: Level.debug);
   Config get config => _config;
   final _success = {'message': 'ok', 'success': true};
   TaskWrap(this._configFilePath, this._dio) {
     _config = Config.fromJson(
       json.decode(File(_configFilePath).readAsStringSync()),
     );
-    _client = ComfyClient(_config.address, _config, _dio, logger: logger);
+    _client = ComfyClient(_config.address, _config, _dio);
     _router
       ..get('/', _mainPage)
       ..post('/setting', _setting)
@@ -44,7 +42,7 @@ class TaskWrap {
     var newConfig = Config.fromJson(json.decode(body));
     File(_configFilePath).writeAsStringSync(json.encode(newConfig.toJson()));
     _client.close();
-    _client = ComfyClient(newConfig.address, newConfig, _dio, logger: logger);
+    _client = ComfyClient(newConfig.address, newConfig, _dio);
     _restart(request);
     _config = newConfig;
     return Response.ok(json.encode(_success));
@@ -63,12 +61,12 @@ class TaskWrap {
       final image = images.first;
       final temp = File('temp.png');
       temp.writeAsBytesSync(image);
-      logger.d('set wallpaper');
-      if (setWallpaper(temp.absolute.path) != 0) {
-        logger.d('failed to set wallpaper');
+      print('set wallpaper');
+      if (setWallpaper(temp.absolute.path) == 0) {
+        print('failed to set wallpaper');
       }
     } catch (e) {
-      logger.e(e);
+      print(e);
     }
   }
 
@@ -100,13 +98,7 @@ class TaskWrap {
 
 Future<void> runServer(TaskWrap wrap) async {
   final handler = Pipeline()
-      .addMiddleware(
-        logRequests(
-          logger: (message, isError) {
-            isError ? wrap.logger.e(message) : wrap.logger.d(message);
-          },
-        ),
-      )
+      .addMiddleware(logRequests())
       .addHandler(wrap._router.call);
   final servers = await serve(
     handler,
