@@ -330,7 +330,7 @@ final htmlTemplate = """
             const form = document.getElementById('configForm');
             const loading = document.getElementById('loading');
             const modelSelect = document.getElementById('model');
-            
+            const authorization = document.getElementById('authorization');
             // 获取当前配置
             fetch('/config')
                 .then(response => response.json())
@@ -371,7 +371,7 @@ final htmlTemplate = """
                     baseUrl = 'http://127.0.0.1:8188';
                 }
                 
-                fetch(baseUrl + '/models/checkpoints', {headers: {"Authorization": formData.get('authorization') || ''}})
+                fetch(baseUrl + '/models/checkpoints', {headers: {"Authorization": authorization.value}})
                     .then(response => response.json())
                     .then(models => {
                         // 清空现有选项
@@ -413,7 +413,7 @@ final htmlTemplate = """
                     baseUrl = 'http://127.0.0.1:8188';
                 }
                 
-                fetch(baseUrl + '/models/upscale_models', {headers: {"Authorization": formData.get('authorization') || ''}})
+                fetch(baseUrl + '/models/upscale_models', {headers: {"Authorization": authorization.value}})
                     .then(response => response.json())
                     .then(models => {
                         // 清空现有选项
