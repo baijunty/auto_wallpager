@@ -147,6 +147,19 @@ class ComfyClient {
     return response.data!;
   }
 
+  Future<void> _freeMemory() async {
+    try {
+      await _dio.post(
+        '$url/free',
+        data: json.encode({'unload_models': true, 'free_memory': true}),
+        options: Options(headers: {'Authorization': config.authorization}),
+      );
+    } catch (e) {
+      // 即使释放内存失败，也不影响主流程
+      print('Failed to free memory: $e');
+    }
+  }
+
   Future<List<Uint8List>> getImages() async {
     await _init();
     final result = await _queuePrompt();
@@ -181,6 +194,7 @@ class ComfyClient {
         }
       }
     }
+    await _freeMemory();
     return outputImages;
   }
 }
