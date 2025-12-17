@@ -314,6 +314,13 @@ final htmlTemplate = """
                     </div>
                 </div>
                 
+                <div class="form-group">
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="releaseMemory" name="releaseMemory">
+                        <label for="releaseMemory">生成图片后释放内存 (仅在需要时勾选)</label>
+                    </div>
+                </div>
+                
                 <button type="submit" class="btn btn-primary btn-block">保存配置</button>
             </form>
             
@@ -473,6 +480,7 @@ final htmlTemplate = """
                     rating: formData.get('rating'),
                     block_tags: formData.get('blockTags') ? 
                         formData.get('blockTags').split(',').map(tag => tag.trim()).filter(tag => tag) : [],
+                    releaseMemory: formData.get('releaseMemory') !== null,
                 };
                 
                 // 处理目标设置

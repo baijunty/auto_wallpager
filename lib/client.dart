@@ -194,7 +194,9 @@ class ComfyClient {
         }
       }
     }
-    await _freeMemory();
+    if (config.releaseMemory) {
+      await _freeMemory();
+    }
     return outputImages;
   }
 }

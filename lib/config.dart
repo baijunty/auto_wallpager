@@ -20,6 +20,7 @@ class Config {
   Target? target;
   int width;
   int height;
+  bool releaseMemory;
 
   Config({
     this.address = 'http://127.0.0.1:8188',
@@ -33,6 +34,7 @@ class Config {
     this.target,
     this.width = 1366,
     this.height = 768,
+    this.releaseMemory = false,
   });
 
   @override
@@ -58,6 +60,7 @@ class Config {
     Target? target,
     int? width,
     int? height,
+    bool? releaseMemory,
   }) {
     return Config(
       address: address ?? this.address,
@@ -71,6 +74,7 @@ class Config {
       target: target ?? this.target,
       width: width ?? this.width,
       height: height ?? this.height,
+      releaseMemory: releaseMemory ?? this.releaseMemory,
     );
   }
 
