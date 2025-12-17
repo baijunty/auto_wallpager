@@ -40,6 +40,7 @@ class TaskWrap {
   Future<Response> _setting(Request request) async {
     final body = await request.readAsString();
     var newConfig = Config.fromJson(json.decode(body));
+    print('new config: $newConfig');
     File(_configFilePath).writeAsStringSync(json.encode(newConfig.toJson()));
     _client.close();
     _client = ComfyClient(newConfig.address, newConfig, _dio);
