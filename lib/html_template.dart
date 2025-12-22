@@ -351,15 +351,14 @@ final htmlTemplate = """
                     document.getElementById('upscaleModel').value = config.upscaleModel || '';
                     document.getElementById('rating').value = config.rating || 'general';
                     document.getElementById('blockTags').value = Array.isArray(config.block_tags) ? config.block_tags.join(', ') : '';
-                        
-                        if (config.target) {
+                    document.getElementById('releaseMemory').checked = config.releaseMemory || false;
+                    if (config.target) {
                             document.getElementById('targetName').value = config.target.name || '';
                             document.getElementById('targetSeries').value = config.target.series || '';
-                        }
-                        
-                        // 加载模型选项
-                        loadModels(config.address || 'http://127.0.0.1:8188', config.model);
-                        loadUpscaleModels(config.address || 'http://127.0.0.1:8188', config.upscaleModel);
+                      }
+                      // 加载模型选项
+                      loadModels(config.address || 'http://127.0.0.1:8188', config.model);
+                      loadUpscaleModels(config.address || 'http://127.0.0.1:8188', config.upscaleModel);
                 })
                 .catch(error => {
                     console.error('获取配置失败:', error);
