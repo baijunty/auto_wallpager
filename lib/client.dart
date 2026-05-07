@@ -34,7 +34,7 @@ class ComfyClient {
         loopForId();
       }
     } catch (e) {
-      print(e);
+      print('init error $e');
       _ws?.close();
       _ws = null;
     }
@@ -43,33 +43,42 @@ class ComfyClient {
   Future<void> _initWorkflow() async {
     workflow['client_id'] = _clientId;
     var prompt = workflow['prompt'] as Map<String, dynamic>;
-    prompt['26']['inputs']['model'] = config.tagModel;
-    prompt['36']['inputs']['ckpt_name'] = config.model;
-    prompt['27']['inputs']['rating'] = config.rating;
-    prompt['27']['inputs']['character'] = config.target?.name ?? '';
-    prompt['27']['inputs']['copyright'] = config.target?.series ?? '';
+    // DanbooruTagsTransformerLoader - model
+    prompt['62']['inputs']['model'] = config.tagModel;
+    // DanbooruTagsTransformerComposePromptV2 - prompt composition
+    prompt['63']['inputs']['rating'] = config.rating;
+    prompt['63']['inputs']['character'] = config.target?.name ?? '';
+    prompt['63']['inputs']['copyright'] = config.target?.series ?? '';
     switch (config.width / config.height) {
       case >= 2:
-        prompt['27']['inputs']['aspect_ratio'] = 'ultra_wide';
+        prompt['63']['inputs']['aspect_ratio'] = 'ultra_wide';
         break;
       case >= 9 / 8 && < 2:
-        prompt['27']['inputs']['aspect_ratio'] = 'wide';
+        prompt['63']['inputs']['aspect_ratio'] = 'wide';
         break;
       case >= 8 / 9 && < 9 / 8:
-        prompt['27']['inputs']['aspect_ratio'] = 'square';
+        prompt['63']['inputs']['aspect_ratio'] = 'square';
         break;
-      case >= 9 / 8 && < 0.5:
-        prompt['27']['inputs']['aspect_ratio'] = 'tall';
+      case < 8 / 9:
+        prompt['63']['inputs']['aspect_ratio'] = 'tall';
         break;
       default:
-        prompt['27']['inputs']['aspect_ratio'] = 'ultra_tall';
+        prompt['63']['inputs']['aspect_ratio'] = 'wide';
         break;
     }
-    prompt['46']['inputs']['model_name'] = config.upscaleModel;
-    prompt['37']['inputs']['width'] = config.width;
-    prompt['37']['inputs']['height'] = config.height;
-    prompt['50']['inputs']['value'] =
-        '${prompt['50']['inputs']['value']},${config.blockTags?.fold('', (acc, s) => '$acc,$s')}';
+    // UpscaleModelLoader - upscale model
+    prompt['71']['inputs']['model_name'] = config.upscaleModel;
+    // DanbooruTagsTransformerGenerateAdvanced - ban tags
+    if (config.blockTags != null && config.blockTags!.isNotEmpty) {
+      prompt['64']['inputs']['ban_tags'] = config.blockTags!.join(',');
+    }
+    // UNETLoader - model (optional override)
+    if (config.model != null && config.model!.isNotEmpty) {
+      prompt['57:28']['inputs']['unet_name'] = config.model;
+    }
+    // EmptySD3LatentImage - dimensions
+    prompt['57:13']['inputs']['width'] = config.width;
+    prompt['57:13']['inputs']['height'] = config.height;
   }
 
   Future<void> loopForId() async {
@@ -99,8 +108,11 @@ class ComfyClient {
 
   Future<Map<String, dynamic>> _queuePrompt() async {
     await _init();
-    (workflow['prompt']['40'])['inputs']['seed'] = Random().nextInt64();
-    (workflow['prompt']['43'])['inputs']['seed'] = Random().nextInt(1 << 32);
+    var prompt = workflow['prompt'] as Map<String, dynamic>;
+    // DanbooruTagsTransformerGenerateAdvanced - seed for tag generation
+    prompt['64']['inputs']['seed'] = Random().nextInt(1 << 32);
+    // KSampler - seed for image generation
+    prompt['57:3']['inputs']['seed'] = Random().nextInt64();
     final response = await _dio.post<Map<String, dynamic>>(
       '$url/prompt',
       data: json.encode(workflow),
@@ -177,8 +189,8 @@ class ComfyClient {
       for (final nodeId in outputs.keys) {
         final nodeOutput = outputs[nodeId];
 
-        if (nodeOutput is Map && nodeOutput['images'] != null) {
-          final images = nodeOutput['images'];
+        if (nodeOutput is Map) {
+          final images = nodeOutput['images'] ?? nodeOutput["text"];
           if (images is List) {
             for (final image in images) {
               if (image is Map) {
@@ -188,6 +200,9 @@ class ComfyClient {
                   image['type'].toString(),
                 );
                 outputImages.add(imageData);
+              } else if (image is String) {
+                final obj = json.decode(image) as Map;
+                outputImages.add(base64Decode(obj.values.first));
               }
             }
           }

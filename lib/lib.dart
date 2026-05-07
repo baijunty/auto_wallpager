@@ -1,19 +1,19 @@
 import 'dart:math';
 
+import 'package:ffi/ffi.dart' show using;
 import 'package:win32/win32.dart';
 export 'client.dart';
 
-int setWallpaper(String imagePath) {
-  final imagePathPtr = TEXT(imagePath);
-  final result = SystemParametersInfo(
-    SPI_SETDESKWALLPAPER,
-    0,
-    imagePathPtr,
-    SPIF_UPDATEINIFILE | SPIF_SENDCHANGE,
-  );
-
-  free(imagePathPtr);
-  return result;
+bool setWallpaper(String imagePath) {
+  return using((arena) {
+    final result = SystemParametersInfo(
+      SPI_SETDESKWALLPAPER,
+      0,
+      arena.pcwstr(imagePath),
+      SPIF_UPDATEINIFILE | SPIF_SENDCHANGE,
+    );
+    return result.value;
+  });
 }
 
 extension Random64 on Random {

@@ -36,7 +36,7 @@ void main(List<String> arguments) async {
       } else {
         config = Config.fromJson(json.decode(file.readAsStringSync()));
       }
-      runServer(TaskWrap(file.absolute.path, dio));
+      await runServer(TaskWrap(file.absolute.path, dio));
     } else {
       dio.get('http://127.0.0.1:8987/nextPaper');
     }

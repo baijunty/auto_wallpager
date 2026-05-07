@@ -43,9 +43,9 @@ class TaskWrap {
     print('new config: $newConfig');
     File(_configFilePath).writeAsStringSync(json.encode(newConfig.toJson()));
     _client.close();
+    _config = newConfig;
     _client = ComfyClient(newConfig.address, newConfig, _dio);
     _restart(request);
-    _config = newConfig;
     return Response.ok(json.encode(_success));
   }
 
@@ -66,8 +66,8 @@ class TaskWrap {
       if (setWallpaper(temp.absolute.path) == 0) {
         print('failed to set wallpaper');
       }
-    } catch (e) {
-      print(e);
+    } catch (e, stack) {
+      print('fetch next paper $e with $stack');
     }
   }
 
