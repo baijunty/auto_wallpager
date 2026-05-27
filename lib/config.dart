@@ -21,6 +21,7 @@ class Config {
   int width;
   int height;
   bool releaseMemory;
+  String? templatePath;
 
   Config({
     this.address = 'http://127.0.0.1:8188',
@@ -35,11 +36,12 @@ class Config {
     this.width = 1366,
     this.height = 768,
     this.releaseMemory = false,
+    this.templatePath,
   });
 
   @override
   String toString() {
-    return 'Config(address: $address, authorization: $authorization, duration: $duration, model: $model, tagModel: $tagModel, upscaleModel: $upscaleModel, rating: $rating, blockTags: $blockTags, target: $target, width: $width, height: $height)';
+    return 'Config(address: $address, authorization: $authorization, duration: $duration, model: $model, tagModel: $tagModel, upscaleModel: $upscaleModel, rating: $rating, blockTags: $blockTags, target: $target, width: $width, height: $height, templatePath: $templatePath)';
   }
 
   factory Config.fromJson(Map<String, dynamic> json) {
@@ -61,6 +63,7 @@ class Config {
     int? width,
     int? height,
     bool? releaseMemory,
+    String? templatePath,
   }) {
     return Config(
       address: address ?? this.address,
@@ -75,6 +78,7 @@ class Config {
       width: width ?? this.width,
       height: height ?? this.height,
       releaseMemory: releaseMemory ?? this.releaseMemory,
+      templatePath: templatePath ?? this.templatePath,
     );
   }
 
@@ -98,5 +102,6 @@ class Config {
       blockTags.hashCode ^
       target.hashCode ^
       width.hashCode ^
-      height.hashCode;
+      height.hashCode ^
+      templatePath.hashCode;
 }

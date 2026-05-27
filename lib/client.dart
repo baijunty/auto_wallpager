@@ -1,9 +1,11 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:io';
 import 'dart:math';
 import 'dart:typed_data';
 
 import 'package:auto_wallpager/lib.dart';
+import 'package:collection/collection.dart';
 import 'package:dio/dio.dart';
 import 'package:uuid/uuid.dart';
 import 'package:web_socket/web_socket.dart';
@@ -12,23 +14,198 @@ import 'config.dart';
 import 'workflow_template.dart';
 
 class ComfyClient {
-  final String url;
   late String _clientId;
-  final Map<String, dynamic> workflow = template;
+  Map<String, dynamic> workflow = {};
   final Dio _dio;
   final _queue = <String>[];
   final completed = <String>[];
   final Config config;
   WebSocket? _ws;
-  ComfyClient(this.url, this.config, this._dio) {
+  ComfyClient(this.config, this._dio) {
     _clientId = Uuid().v4();
+    // 如果有配置的模板路径，从 API 加载
+    print("config $config");
+    if (config.templatePath != null && config.templatePath!.isNotEmpty) {
+      _loadTemplateFromApi(config.templatePath!);
+    } else {
+      // 默认使用内置模板
+      workflow = Map<String, dynamic>.from(template);
+    }
   }
 
+  /// 从 API 加载工作流模板
+  Future<void> _loadTemplateFromApi(String templatePath) async {
+    final url = '${config.address}/api/userdata/api_workflows%2F$templatePath';
+    try {
+      final response = await _dio.get<Map<String, dynamic>>(
+        url,
+        options: Options(
+          responseType: ResponseType.json,
+          headers: {'Authorization': config.authorization},
+        ),
+      );
+
+      if (response.data != null && response.data!.containsKey('prompt')) {
+        workflow = Map<String, dynamic>.from(response.data!);
+        await _configureWorkflowByClassType();
+      }
+    } catch (e) {
+      print('Failed to load template from API $url : $e');
+      // 加载失败时使用内置模板
+      workflow = Map<String, dynamic>.from(template);
+    }
+  }
+
+  /// 从外部 JSON 文件加载 workflow 模板
+  ///
+  /// [filePath] JSON 文件路径
+  /// [setClassType] 当为 true 时，通过 class_type 搜索并设置相关配置项
+  Future<void> loadWorkflowFromJson(
+    String filePath, {
+    bool setClassType = true,
+  }) async {
+    final file = File(filePath);
+    if (!await file.exists()) {
+      throw FileSystemException('Workflow file not found', filePath);
+    }
+
+    final content = await file.readAsString();
+    final json = jsonDecode(content) as Map<String, dynamic>;
+
+    // 验证 JSON 结构
+    if (!json.containsKey('prompt')) {
+      throw FormatException('Invalid workflow JSON: missing "prompt" key');
+    }
+
+    workflow = json;
+
+    if (setClassType) {
+      await _configureWorkflowByClassType();
+    }
+  }
+
+  /// 从 API 加载工作流模板（公共方法）
+  ///
+  /// [templatePath] 模板路径，例如："anima.json" 或 "subdir/template.json"
+  Future<void> loadTemplateFromApi(String templatePath) async {
+    await _loadTemplateFromApi(templatePath);
+  }
+
+  /// 通过 class_type 搜索并配置 workflow 中的节点
+  Future<void> _configureWorkflowByClassType() async {
+    workflow['client_id'] = _clientId;
+    var prompt = workflow['prompt'] as Map<String, dynamic>;
+
+    // 遍历所有节点，按 class_type 配置
+    prompt.forEach((nodeId, node) {
+      if (node is! Map<String, dynamic>) return;
+      if (node['class_type'] case final classType?) {
+        _configureNodeByClassType(prompt, nodeId, classType);
+      }
+    });
+  }
+
+  /// 根据 class_type 配置单个节点
+  void _configureNodeByClassType(
+    Map<String, dynamic> prompt,
+    String nodeId,
+    String classType,
+  ) {
+    final inputs = prompt[nodeId]['inputs'] as Map<String, dynamic>;
+    switch (classType) {
+      case 'DanbooruTagsTransformerLoader':
+        inputs['model'] = config.tagModel;
+        break;
+
+      case 'DanbooruTagsTransformerComposePromptV2':
+        inputs['rating'] = config.rating;
+        inputs['character'] = config.target?.name ?? '';
+        inputs['copyright'] = config.target?.series ?? '';
+        inputs['aspect_ratio'] = _calculateAspectRatio();
+        break;
+
+      case 'UpscaleModelLoader':
+        inputs['model_name'] = config.upscaleModel;
+        break;
+
+      case 'DanbooruTagsTransformerGenerateAdvanced':
+        if (config.blockTags != null && config.blockTags!.isNotEmpty) {
+          inputs['ban_tags'] = config.blockTags!.join(',');
+        }
+        break;
+
+      case 'UNETLoader':
+        if (config.model != null && config.model!.isNotEmpty) {
+          inputs['unet_name'] = config.model;
+        }
+        break;
+      case 'EmptyLatentImage':
+      case 'EmptySD3LatentImage':
+        inputs['width'] = config.width;
+        inputs['height'] = config.height;
+        break;
+    }
+    print("set $classType for $nodeId $inputs");
+  }
+
+  /// 根据宽高比计算 aspect_ratio
+  String _calculateAspectRatio() {
+    switch (config.width / config.height) {
+      case >= 2:
+        return 'ultra_wide';
+      case >= 9 / 8 && < 2:
+        return 'wide';
+      case >= 8 / 9 && < 9 / 8:
+        return 'square';
+      case < 8 / 9:
+        return 'tall';
+      default:
+        return 'wide';
+    }
+  }
+
+  /// 根据 class_type 设置特定节点的某个输入项
+  ///
+  /// [classType] 节点类型
+  /// [inputKey] 要设置的输入键名
+  /// [value] 要设置的值
+  void setNodeInputByClassType(
+    String classType,
+    String inputKey,
+    dynamic value,
+  ) {
+    var prompt = workflow['prompt'] as Map<String, dynamic>;
+    prompt.forEach((nodeId, node) {
+      if (node is Map<String, dynamic>) {
+        if (node['class_type'] == classType) {
+          final inputs = node['inputs'] as Map<String, dynamic>;
+          inputs[inputKey] = value;
+        }
+      }
+    });
+  }
+
+  /// 初始化 workflow 配置
+  void _initWorkflow() {
+    workflow['client_id'] = _clientId;
+    var prompt = workflow['prompt'] as Map<String, dynamic>;
+
+    // 遍历所有节点，按 class_type 配置
+    prompt.forEach((nodeId, node) {
+      if (node is! Map<String, dynamic>) return;
+      final classType = node['class_type'];
+      if (classType != null && classType is String) {
+        _configureNodeByClassType(prompt, nodeId, classType);
+      }
+    });
+  }
+
+  /// 初始化 WebSocket 连接
   Future<void> _init() async {
     try {
       if (_ws == null) {
         var uri =
-            '${url.startsWith('https') ? 'wss' : 'ws'}${url.substring(url.startsWith('https') ? 5 : 4)}/ws?clientId=$_clientId';
+            '${config.address.startsWith('https') ? 'wss' : 'ws'}${config.address.substring(config.address.startsWith('https') ? 5 : 4)}/ws?clientId=$_clientId';
         _ws = await WebSocket.connect(Uri.parse(uri));
         _initWorkflow();
         loopForId();
@@ -40,45 +217,31 @@ class ComfyClient {
     }
   }
 
-  Future<void> _initWorkflow() async {
-    workflow['client_id'] = _clientId;
+  /// 查找所有匹配 class_type 的节点 ID
+  List<String> findNodesByClassType(String classType) {
     var prompt = workflow['prompt'] as Map<String, dynamic>;
-    // DanbooruTagsTransformerLoader - model
-    prompt['62']['inputs']['model'] = config.tagModel;
-    // DanbooruTagsTransformerComposePromptV2 - prompt composition
-    prompt['63']['inputs']['rating'] = config.rating;
-    prompt['63']['inputs']['character'] = config.target?.name ?? '';
-    prompt['63']['inputs']['copyright'] = config.target?.series ?? '';
-    switch (config.width / config.height) {
-      case >= 2:
-        prompt['63']['inputs']['aspect_ratio'] = 'ultra_wide';
-        break;
-      case >= 9 / 8 && < 2:
-        prompt['63']['inputs']['aspect_ratio'] = 'wide';
-        break;
-      case >= 8 / 9 && < 9 / 8:
-        prompt['63']['inputs']['aspect_ratio'] = 'square';
-        break;
-      case < 8 / 9:
-        prompt['63']['inputs']['aspect_ratio'] = 'tall';
-        break;
-      default:
-        prompt['63']['inputs']['aspect_ratio'] = 'wide';
-        break;
-    }
-    // UpscaleModelLoader - upscale model
-    prompt['71']['inputs']['model_name'] = config.upscaleModel;
-    // DanbooruTagsTransformerGenerateAdvanced - ban tags
-    if (config.blockTags != null && config.blockTags!.isNotEmpty) {
-      prompt['64']['inputs']['ban_tags'] = config.blockTags!.join(',');
-    }
-    // UNETLoader - model (optional override)
-    if (config.model != null && config.model!.isNotEmpty) {
-      prompt['57:28']['inputs']['unet_name'] = config.model;
-    }
-    // EmptySD3LatentImage - dimensions
-    prompt['57:13']['inputs']['width'] = config.width;
-    prompt['57:13']['inputs']['height'] = config.height;
+    return prompt.entries
+        .where((e) => e.value is Map && e.value['class_type'] == classType)
+        .map((e) => e.key)
+        .toList();
+  }
+
+  /// 获取指定 class_type 的节点
+  Map<String, dynamic>? getNodeByClassType(String classType) {
+    var prompt = workflow['prompt'] as Map<String, dynamic>;
+    final entry = prompt.entries.firstWhereOrNull(
+      (e) => e.value is Map && e.value['class_type'] == classType,
+    );
+    return entry?.value as Map<String, dynamic>?;
+  }
+
+  /// 获取 workflow 中所有的 class_type
+  Set<String> getAllClassTypes() {
+    var prompt = workflow['prompt'] as Map<String, dynamic>;
+    return prompt.entries
+        .where((e) => e.value is Map && e.value['class_type'] != null)
+        .map((e) => e.value['class_type'] as String)
+        .toSet();
   }
 
   Future<void> loopForId() async {
@@ -108,13 +271,27 @@ class ComfyClient {
 
   Future<Map<String, dynamic>> _queuePrompt() async {
     await _init();
-    var prompt = workflow['prompt'] as Map<String, dynamic>;
     // DanbooruTagsTransformerGenerateAdvanced - seed for tag generation
-    prompt['64']['inputs']['seed'] = Random().nextInt(1 << 32);
+    var tagNode = getNodeByClassType('DanbooruTagsTransformerGenerateAdvanced');
+    if (tagNode != null) {
+      (tagNode['inputs'] as Map<String, dynamic>)['seed'] = Random().nextInt(
+        1 << 32,
+      );
+    }
+    tagNode = getNodeByClassType('DanbooruTagsTransformerGenerate');
+    if (tagNode != null) {
+      (tagNode['inputs'] as Map<String, dynamic>)['seed'] = Random().nextInt(
+        1 << 32,
+      );
+    }
     // KSampler - seed for image generation
-    prompt['57:3']['inputs']['seed'] = Random().nextInt64();
+    final ksamplerNode = getNodeByClassType('KSampler');
+    if (ksamplerNode != null) {
+      (ksamplerNode['inputs'] as Map<String, dynamic>)['seed'] = Random()
+          .nextInt64();
+    }
     final response = await _dio.post<Map<String, dynamic>>(
-      '$url/prompt',
+      '${config.address}/prompt',
       data: json.encode(workflow),
       options: Options(
         responseType: ResponseType.json,
@@ -138,7 +315,7 @@ class ComfyClient {
     };
     final urlValues = Uri(queryParameters: data).query;
     final response = await _dio.get<Uint8List>(
-      '$url/view?$urlValues',
+      '${config.address}/view?$urlValues',
       options: Options(
         responseType: ResponseType.bytes,
         headers: {'Authorization': config.authorization},
@@ -150,7 +327,7 @@ class ComfyClient {
   Future<Map<String, dynamic>> getHistory(String promptId) async {
     await _init();
     final response = await _dio.get<Map<String, dynamic>>(
-      '$url/history/$promptId',
+      '${config.address}/history/$promptId',
       options: Options(
         responseType: ResponseType.json,
         headers: {'Authorization': config.authorization},
@@ -162,7 +339,7 @@ class ComfyClient {
   Future<void> _freeMemory() async {
     try {
       await _dio.post(
-        '$url/free',
+        '${config.address}/free',
         data: json.encode({'unload_models': true, 'free_memory': true}),
         options: Options(headers: {'Authorization': config.authorization}),
       );

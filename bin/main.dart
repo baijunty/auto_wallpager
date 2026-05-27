@@ -29,14 +29,14 @@ void main(List<String> arguments) async {
       var config = Config(
         address: url,
         duration: time,
-        model: 'waiNSFWIllustrious_v150.safetensors',
+        model: 'z-anime-distill-8step-aio-fp8.safetensors',
       );
       if (!file.existsSync()) {
         file.writeAsStringSync(json.encode(config));
       } else {
         config = Config.fromJson(json.decode(file.readAsStringSync()));
       }
-      await runServer(TaskWrap(file.absolute.path, dio));
+      runServer(TaskWrap(file.absolute.path, dio));
     } else {
       dio.get('http://127.0.0.1:8987/nextPaper');
     }

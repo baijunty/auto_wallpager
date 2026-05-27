@@ -214,8 +214,15 @@ final htmlTemplate = """
         <div class="form-container">
             <form id="configForm">
                 <div class="form-group">
+                    <label for="templateSelect">工作流模板</label>
+                    <select class="form-control" id="templateSelect" name="templateSelect">
+                        <option value="">使用内置模板</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
                     <label for="address">服务器地址</label>
-                    <input type="text" class="form-control" id="address" name="address" placeholder="例如: http://127.0.0.1:8188">
+                    <input type="text" class="form-control" id="address" name="address" placeholder="例如：http://127.0.0.1:8188">
                 </div>
 
                 <div class="form-group">
@@ -338,6 +345,7 @@ final htmlTemplate = """
             const loading = document.getElementById('loading');
             const modelSelect = document.getElementById('model');
             const authorization = document.getElementById('authorization');
+            const templateSelect = document.getElementById('templateSelect');
             // 获取当前配置
             fetch('/config')
                 .then(response => response.json())
@@ -359,6 +367,7 @@ final htmlTemplate = """
                       // 加载模型选项
                       loadModels(config.address || 'http://127.0.0.1:8188', config.model);
                       loadUpscaleModels(config.address || 'http://127.0.0.1:8188', config.upscaleModel);
+                      loadTemplates(config.templatePath);
                 })
                 .catch(error => {
                     console.error('获取配置失败:', error);
@@ -366,6 +375,49 @@ final htmlTemplate = """
                     loadModels('http://127.0.0.1:8188', null);
                 });
 
+            // 加载模板列表
+            function loadTemplates(currentTemplate) {
+                const address = document.getElementById('address').value.trim();
+                if (!address) {
+                    console.log('服务器地址未设置，跳过加载模板列表');
+                    return;
+                }
+
+                // 从地址中提取 baseUrl
+                let baseUrl = address;
+                try {
+                    const url = new URL(address);
+                } catch (e) {
+                    console.error('无效的服务器地址:', address);
+                    return;
+                }
+
+                fetch(baseUrl + '/api/userdata?dir=api_workflows&recurse=true&split=false&full_info=true', {
+                    headers: {"Authorization": authorization.value}
+                })
+                    .then(response => response.json())
+                    .then(files => {
+                        // 清空现有选项，保留默认项
+                        templateSelect.innerHTML = '<option value="">使用内置模板</option>';
+
+                        // 过滤出 JSON 文件
+                        const jsonFiles = files.filter(file => file.path.endsWith('.json'));
+
+                        // 添加模板选项
+                        jsonFiles.forEach(file => {
+                            const option = document.createElement('option');
+                            option.value = file.path;
+                            option.textContent = file.path;
+                            if (file.path === currentTemplate) {
+                                option.selected = true;
+                            }
+                            templateSelect.appendChild(option);
+                        });
+                    })
+                    .catch(error => {
+                        console.error('加载模板列表失败:', error);
+                    });
+            }
             // 加载模型列表
             function loadModels(address, currentModel) {
                 // 从地址中提取主机和端口
@@ -448,12 +500,32 @@ final htmlTemplate = """
                     });
             }
 
-            // 监听地址变化以重新加载模型
+            // 监听地址变化以重新加载模型和模板
             document.getElementById('address').addEventListener('focusout', function() {
                 const address = this.value.trim();
                 if (address) {
                     loadModels(address, null);
                     loadUpscaleModels(address, null);
+                    loadTemplates(null);
+                }
+            });
+
+            // 监听模板选择变化
+            templateSelect.addEventListener('change', function() {
+                const selectedTemplate = this.value;
+                if (selectedTemplate) {
+                    // 将选中的模板路径保存到配置中
+                    const hiddenTemplateInput = document.createElement('input');
+                    hiddenTemplateInput.type = 'hidden';
+                    hiddenTemplateInput.name = 'templatePath';
+                    hiddenTemplateInput.value = selectedTemplate;
+                    // 移除已存在的同名输入框
+                    const existing = form.querySelector('input[name="templatePath"]');
+                    if (existing) existing.remove();
+                    form.appendChild(hiddenTemplateInput);
+                } else {
+                    const existing = form.querySelector('input[name="templatePath"]');
+                    if (existing) existing.remove();
                 }
             });
 
@@ -480,6 +552,7 @@ final htmlTemplate = """
                     block_tags: formData.get('blockTags') ?
                         formData.get('blockTags').split(',').map(tag => tag.trim()).filter(tag => tag) : [],
                     releaseMemory: formData.get('releaseMemory') !== null,
+                    templatePath: formData.get('templatePath') || '',
                 };
 
                 // 处理目标设置

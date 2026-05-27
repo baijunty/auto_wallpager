@@ -6,3 +6,17 @@ temp.png
 build/
 main.exe
 *.lock
+
+# IDE files (uncomment if you want to version control)
+# .idea/
+# *.iml
+# .vscode/
+
+# macOS
+.DS_Store
+
+# Windows
+Thumbs.db
+
+# Local environment variables (optional - uncomment if needed)
+# .env

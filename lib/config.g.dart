@@ -25,6 +25,7 @@ Config _$ConfigFromJson(Map<String, dynamic> json) => Config(
   width: (json['width'] as num?)?.toInt() ?? 1366,
   height: (json['height'] as num?)?.toInt() ?? 768,
   releaseMemory: json['releaseMemory'] as bool? ?? false,
+  templatePath: json['templatePath'] as String?,
 );
 
 Map<String, dynamic> _$ConfigToJson(Config instance) => <String, dynamic>{
@@ -40,4 +41,5 @@ Map<String, dynamic> _$ConfigToJson(Config instance) => <String, dynamic>{
   'width': instance.width,
   'height': instance.height,
   'releaseMemory': instance.releaseMemory,
+  'templatePath': instance.templatePath,
 };

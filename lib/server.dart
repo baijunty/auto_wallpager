@@ -24,7 +24,7 @@ class TaskWrap {
     _config = Config.fromJson(
       json.decode(File(_configFilePath).readAsStringSync()),
     );
-    _client = ComfyClient(_config.address, _config, _dio);
+    _client = ComfyClient(_config, _dio);
     _router
       ..get('/', _mainPage)
       ..post('/setting', _setting)
@@ -44,7 +44,7 @@ class TaskWrap {
     File(_configFilePath).writeAsStringSync(json.encode(newConfig.toJson()));
     _client.close();
     _config = newConfig;
-    _client = ComfyClient(newConfig.address, newConfig, _dio);
+    _client = ComfyClient(newConfig, _dio);
     _restart(request);
     return Response.ok(json.encode(_success));
   }
