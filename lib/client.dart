@@ -33,8 +33,59 @@ class ComfyClient {
     }
   }
 
+  /// 获取模板的本地缓存路径
+  String _getCachePath(String templatePath) {
+    // 将模板路径转换为本地文件名，例如 "subdir/template.json" -> "subdir_template.json"
+    final fileName = templatePath.replaceAll(RegExp(r'[\\/]'), '_');
+    return 'templates_cache/$fileName.json';
+  }
+
+  /// 检查本地缓存是否存在且有效
+  Future<Map<String, dynamic>?> _loadFromCache(String templatePath) async {
+    final cachePath = _getCachePath(templatePath);
+    final file = File(cachePath);
+    try {
+      if (await file.exists()) {
+        final content = await file.readAsString();
+        final json = jsonDecode(content) as Map<String, dynamic>;
+        if (json.containsKey('prompt')) {
+          print('Loaded template from cache: $cachePath');
+          return json;
+        }
+      }
+    } catch (e) {
+      print('Failed to load from cache $cachePath: $e');
+    }
+    return null;
+  }
+
+  /// 保存模板到本地缓存
+  Future<void> _saveToCache(String templatePath, Map<String, dynamic> workflow) async {
+    try {
+      final cachePath = _getCachePath(templatePath);
+      final cacheDir = Directory('templates_cache');
+      if (!await cacheDir.exists()) {
+        await cacheDir.create(recursive: true);
+      }
+      final file = File(cachePath);
+      await file.writeAsString(jsonEncode(workflow));
+      print('Saved template to cache: $cachePath');
+    } catch (e) {
+      print('Failed to save template to cache: $e');
+    }
+  }
+
   /// 从 API 加载工作流模板
   Future<void> _loadTemplateFromApi(String templatePath) async {
+    // 优先从本地缓存加载
+    final cachedWorkflow = await _loadFromCache(templatePath);
+    if (cachedWorkflow != null) {
+      workflow = cachedWorkflow;
+      await _configureWorkflowByClassType();
+      return;
+    }
+
+    // 缓存不存在，从 API 下载
     final url = '${config.address}/api/userdata/api_workflows%2F$templatePath';
     try {
       final response = await _dio.get<Map<String, dynamic>>(
@@ -47,6 +98,8 @@ class ComfyClient {
 
       if (response.data != null && response.data!.containsKey('prompt')) {
         workflow = Map<String, dynamic>.from(response.data!);
+        // 保存到本地缓存
+        await _saveToCache(templatePath, workflow);
         await _configureWorkflowByClassType();
       }
     } catch (e) {

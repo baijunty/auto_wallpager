@@ -26,6 +26,9 @@ Config _$ConfigFromJson(Map<String, dynamic> json) => Config(
   height: (json['height'] as num?)?.toInt() ?? 768,
   releaseMemory: json['releaseMemory'] as bool? ?? false,
   templatePath: json['templatePath'] as String?,
+  nextGenTime: json['next_gen_time'] == null
+      ? null
+      : DateTime.parse(json['next_gen_time'] as String),
 );
 
 Map<String, dynamic> _$ConfigToJson(Config instance) => <String, dynamic>{
@@ -42,4 +45,5 @@ Map<String, dynamic> _$ConfigToJson(Config instance) => <String, dynamic>{
   'height': instance.height,
   'releaseMemory': instance.releaseMemory,
   'templatePath': instance.templatePath,
+  'next_gen_time': instance.nextGenTime?.toIso8601String(),
 };

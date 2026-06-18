@@ -22,6 +22,8 @@ class Config {
   int height;
   bool releaseMemory;
   String? templatePath;
+  @JsonKey(name: 'next_gen_time')
+  DateTime? nextGenTime;
 
   Config({
     this.address = 'http://127.0.0.1:8188',
@@ -37,6 +39,7 @@ class Config {
     this.height = 768,
     this.releaseMemory = false,
     this.templatePath,
+    this.nextGenTime,
   });
 
   @override
@@ -64,6 +67,7 @@ class Config {
     int? height,
     bool? releaseMemory,
     String? templatePath,
+    DateTime? nextGenTime,
   }) {
     return Config(
       address: address ?? this.address,
@@ -79,6 +83,7 @@ class Config {
       height: height ?? this.height,
       releaseMemory: releaseMemory ?? this.releaseMemory,
       templatePath: templatePath ?? this.templatePath,
+      nextGenTime: nextGenTime ?? this.nextGenTime,
     );
   }
 
